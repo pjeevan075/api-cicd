@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="39b8bbfc-3ecb-41db-8a70-5cefd372a27a" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="R1" doc:name="HTTP Request configuration" doc:id="9a0d0032-d257-4095-8a4a-d327236ac81e" basePath="/api">
+		<http:request-connection host="worldtimeapi.org" port="80" />
+	</http:request-config>
+	<http:request-config name="R2" doc:name="HTTP Request configuration" doc:id="142aeae4-fb3c-4d95-8a3d-6ad2f5c491a5" basePath="/api" >
+		<http:request-connection host="worldtimeapi.org" port="80" />
+	</http:request-config>
+	<flow name="apiCICD" doc:id="6319061a-d1f3-4aae-94c3-2d7728d2f5b9" >
+		<http:listener doc:name="Listener" doc:id="ffae774c-dba5-4982-b8be-83918d4f1216" config-ref="HTTP_Listener_config" path="/cicd"/>
+		<logger level="INFO" doc:name="Logger" doc:id="24593830-10d1-45ec-8aa2-e10ba5d6df7a" message="#[payload]"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="5c03a562-62b3-495d-8c09-12802306aad8">
+			<route>
+				<http:request method="GET" doc:name="/timezone/Asia/Kolkata" doc:id="22274489-4d88-4839-9f49-d19ec4f9e908" config-ref="R1" path="/timezone/Asia/Kolkata" />
+				<logger level="INFO" doc:name="Logger" doc:id="c8480e0a-eb80-4627-a41f-c286b6287565" message="#[payload]" />
+			</route>
+			<route>
+				<http:request method="GET" doc:name="/timezone/America/Argentina/Salta" doc:id="36671765-3941-4797-9b63-34651e79620a" config-ref="R2" path="/timezone/America/Argentina/Salta"/>
+				<logger level="INFO" doc:name="Logger" doc:id="dd3e2d78-f658-4470-ace8-9eaa4d8a6d69" message="#[payload]"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="9f2d0413-1e43-47fe-84cb-9c0e961d8d3e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
